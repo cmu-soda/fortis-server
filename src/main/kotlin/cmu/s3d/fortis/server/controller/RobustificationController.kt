@@ -1,5 +1,6 @@
 package cmu.s3d.fortis.server.controller
 
+import cmu.s3d.fortis.common.RobustificationResult
 import cmu.s3d.fortis.common.Spec
 import cmu.s3d.fortis.common.SpecType
 import cmu.s3d.fortis.common.SupervisoryOptions
@@ -17,7 +18,7 @@ class RobustificationController(
     private val service: RobustificationService
 ) {
     @PostMapping("/supervisory")
-    fun robustify(@RequestBody request: RobustificationRequest): List<String> {
+    fun robustify(@RequestBody request: RobustificationRequest): List<RobustificationResult> {
         return service.robustify(
             request.sysSpecs,
             request.envSpecs,
