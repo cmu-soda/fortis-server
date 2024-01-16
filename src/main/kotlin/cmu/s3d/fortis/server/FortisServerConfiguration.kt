@@ -2,6 +2,7 @@ package cmu.s3d.fortis.server
 
 import cmu.s3d.fortis.service.RobustificationService
 import cmu.s3d.fortis.service.RobustnessComputationService
+import cmu.s3d.fortis.service.WeakeningService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.rmi.registry.LocateRegistry
@@ -21,5 +22,12 @@ class FortisServerConfiguration {
         val registry = LocateRegistry.getRegistry()
         val robustificationService = registry.lookup("RobustificationService")
         return robustificationService as RobustificationService
+    }
+
+    @Bean
+    fun weakeningServiceProxy(): WeakeningService {
+        val registry = LocateRegistry.getRegistry()
+        val weakeningService = registry.lookup("WeakeningService")
+        return weakeningService as WeakeningService
     }
 }

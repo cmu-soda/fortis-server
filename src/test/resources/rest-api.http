@@ -1,0 +1,68 @@
+POST http://localhost:8080/api/robustify/supervisory
+Content-Type: application/json
+
+{
+  "sysSpecs": [{"type":"FSP","content":"const IntNotSet = 0\r\nconst IntXray = 1\r\nconst IntEBeam = 2\r\nrange IntModeState = IntNotSet .. IntEBeam\r\n\r\nINTERFACE = INTERFACE[IntNotSet],\r\nINTERFACE[mode:IntModeState] = (x -> CONFIRM[IntXray] | e -> CONFIRM[IntEBeam]),\r\nCONFIRM[mode:IntModeState] = (up -> INTERFACE | enter -> FIRE[mode]),\r\nFIRE[mode:IntModeState] = (\r\n    when (mode == IntXray) b -> fire_xray -> enter -> INTERFACE\r\n    |\r\n    when (mode == IntEBeam) b -> fire_ebeam -> enter -> INTERFACE\r\n    |\r\n    up -> CONFIRM[mode]\r\n).\r\n\r\nBEAM = (x -> XRAY | e -> EBeam),\r\nXRAY = (x -> XRAY | e -> ToEBeam),\r\nToEBeam = (setMode -> EBeam | x -> XRAY | e -> ToEBeam),\r\nEBeam = (e -> EBeam | x -> ToXray),\r\nToXray = (setMode -> XRAY | e -> EBeam | x -> ToXray).\r\n\r\nSPREADER = (e -> OUTPLACE | x -> SPREADER),\r\nOUTPLACE = (e -> OUTPLACE | x -> SPREADER).\r\n\r\n||SYS = (INTERFACE || BEAM || SPREADER).\r\n"}],
+  "envSpecs": [{"type":"FSP","content":"ENV = (x -> ENV_1 | e -> ENV_1),ENV_1 = (enter -> ENV_2 | up -> ENV),ENV_2 = (b -> enter -> ENV | up -> ENV_1)."}],
+  "propSpecs": [{"type":"FSP","content":"const InPlace = 0\r\nconst OutPlace = 1\r\nrange SpreaderState = InPlace .. OutPlace\r\n\r\nconst NotSet = 2\r\nconst Xray = 3\r\nconst EBeam = 4\r\nconst ToXray = 5\r\nconst ToEBeam = 6\r\nrange BeamState = NotSet .. ToEBeam\r\n\r\nP = P[InPlace][NotSet],\r\nP[spreader:SpreaderState][power:BeamState] = (\r\n    when (power == NotSet || power == Xray || power == ToEBeam) x -> P[InPlace][Xray]\r\n    |\r\n    when (power == NotSet || power == EBeam || power == ToXray) e -> P[OutPlace][EBeam]\r\n    |\r\n    when (power == Xray || power == ToEBeam) e -> P[OutPlace][ToEBeam]\r\n    |\r\n    when (power == EBeam || power == ToXray) x -> P[InPlace][ToXray]\r\n    |\r\n    when (power == ToEBeam) setMode -> P[spreader][EBeam]\r\n    |\r\n    when (power == ToXray) setMode -> P[spreader][Xray]\r\n    |\r\n    when (power != NotSet && (spreader != OutPlace || power == EBeam || power == ToXray)) b -> P[spreader][power]\r\n)."}],
+  "options": {
+    "progress": ["fire_xray", "fire_ebeam"],
+    "preferredBeh": {
+      "P3": [
+        ["x", "up", "e", "enter", "b"],
+        ["e", "up", "x", "enter", "b"]
+      ],
+      "P2": [
+        ["x", "enter", "up", "up", "e", "enter", "b"],
+        ["e", "enter", "up", "up", "x", "enter", "b"]
+      ]
+    },
+    "controllable": {
+      "P0": ["fire_xray", "fire_ebeam", "setMode"],
+      "P1": ["x", "e", "enter", "up", "b"]
+    },
+    "observable": {
+      "P0": ["x", "e", "enter", "up", "b", "fire_xray", "fire_ebeam", "setMode"]
+    },
+    "algorithm": "Fast",
+    "maxIter": 1
+  },
+  "outputFormat": "FSP"
+}
+
+###
+POST http://localhost:8080/api/weakening/examplesFromTrace
+Content-Type: application/json
+
+{
+  "sysSpecs": [{"type": "FSP", "content": "INTERFACE = (x -> CONFIRM | e -> CONFIRM),\nCONFIRM = (up -> INTERFACE | enter -> FIRE),\nFIRE = (up -> CONFIRM | b -> enter -> INTERFACE).\n\nconst NotSet = 0\nconst Xray = 1\nconst EBeam = 2\nrange BeamState = NotSet .. EBeam\n\nconst ToXray = 3\nconst ToEBeam = 4\nrange BeamSwitch = ToXray .. ToEBeam\n\nBEAM = BEAM[NotSet],\nBEAM[mode:BeamState] = (\n    when (mode == NotSet) x -> set_xray -> BEAM[Xray]\n    |\n    when (mode == NotSet) e -> set_ebeam -> BEAM[EBeam]\n    |\n    // Xray mode\n    when (mode == Xray) x -> BEAM[Xray]\n    |\n    when (mode == Xray) e -> BEAM_SWITCH[ToEBeam]\n    |\n    when (mode == Xray) b -> fire_xray -> reset -> BEAM\n    |\n    // EBeam mode\n    when (mode == EBeam) e -> BEAM[EBeam]\n    |\n    when (mode == EBeam) x -> BEAM_SWITCH[ToXray]\n    |\n    when (mode == EBeam) b -> fire_ebeam -> reset -> BEAM\n),\nBEAM_SWITCH[switch:BeamSwitch] = (\n    // EBeam to Xray\n    when (switch == ToXray) x -> BEAM_SWITCH[ToXray]\n    |\n    when (switch == ToXray) e -> BEAM[EBeam]\n    |\n    when (switch == ToXray) b -> fire_ebeam -> reset -> BEAM\n    |\n    when (switch == ToXray) set_xray -> BEAM[Xray]\n    |\n    // Xray to EBeam\n    when (switch == ToEBeam) e -> BEAM_SWITCH[ToEBeam]\n    |\n    when (switch == ToEBeam) x -> BEAM[Xray]\n    |\n    when (switch == ToEBeam) b -> fire_xray -> reset -> BEAM\n    |\n    when (switch == ToEBeam) set_ebeam -> BEAM[EBeam]\n).\n\nSPREADER = (e -> OUTPLACE | x -> SPREADER),\nOUTPLACE = (e -> OUTPLACE | x -> SPREADER).\n\n||SYS = (INTERFACE || BEAM || SPREADER)."}],
+  "envSpecs": [{"type": "FSP", "content": "ENV = (x -> ENV_1 | e -> ENV_1),\nENV_1 = (enter -> ENV_2 | up -> ENV),\nENV_2 = (b -> enter -> ENV | up -> ENV_1)."}],
+  "trace": ["x", "up", "e", "enter", "b"],
+  "inputs": ["x", "up", "e", "enter", "b"],
+  "fluents": [
+    "fluent Xray = <set_xray, {set_ebeam, reset}>",
+    "fluent EBeam = <set_ebeam, {set_xray, reset}>",
+    "fluent InPlace = <x, e> initially 1",
+    "fluent Fired = <{fire_xray, fire_ebeam}, reset>"
+  ]
+}
+
+###
+POST http://localhost:8080/api/weakening/weakenSafetyInvariant
+Content-Type: application/json
+
+{
+  "invariant": "[](Xray -> InPlace)",
+  "fluents": [
+    "fluent Xray = <set_xray, {set_ebeam, reset}>",
+    "fluent EBeam = <set_ebeam, {set_xray, reset}>",
+    "fluent InPlace = <x, e> initially 1",
+    "fluent Fired = <{fire_xray, fire_ebeam}, reset>"
+  ],
+  "positiveExamples": [
+    ["x", "set_xray", "up", "e", "set_ebeam", "enter", "b", "fire_ebeam", "reset"]
+  ],
+  "negativeExamples": [
+    ["x", "set_xray", "up", "e", "enter", "b", "fire_xray", "reset"]
+  ]
+}
