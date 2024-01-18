@@ -46,6 +46,10 @@
 			<artifactId>fortis-api</artifactId>
 			<version>1.4.0-SNAPSHOT</version>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-websocket</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>
