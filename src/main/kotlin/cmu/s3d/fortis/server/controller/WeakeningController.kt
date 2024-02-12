@@ -1,14 +1,9 @@
 package cmu.s3d.fortis.server.controller
 
 import cmu.s3d.fortis.common.Spec
-import cmu.s3d.fortis.common.asSerializableWord
 import cmu.s3d.fortis.service.WeakeningService
 import net.automatalib.word.Word
-import org.springframework.web.bind.annotation.CrossOrigin
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/weakening")
@@ -46,6 +41,17 @@ class WeakeningController(
             request.negativeExamples
         )
     }
+
+    @PostMapping("/weakenGR1Invariant")
+    fun weakenGR1Invariant(@RequestBody request: WeakeningRequest): String {
+        return service.weakenGR1Invariant(
+            request.invariant,
+            request.fluents,
+            request.positiveExamples,
+            request.negativeExamples,
+            request.maxNumOfNode?: error("should specify maxNumOfNode for GR1 weakening")
+        ) ?: ""
+    }
 }
 
 data class ExampleGenerationRequest(
@@ -61,5 +67,6 @@ data class WeakeningRequest(
     val invariant: String,
     val fluents: List<String>,
     val positiveExamples: List<Word<String>>,
-    val negativeExamples: List<Word<String>>
+    val negativeExamples: List<Word<String>>,
+    val maxNumOfNode: Int?
 )

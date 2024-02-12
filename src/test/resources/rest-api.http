@@ -66,3 +66,24 @@ Content-Type: application/json
     ["x", "set_xray", "up", "e", "enter", "b", "fire_xray", "reset"]
   ]
 }
+
+###
+POST http://localhost:8080/api/weakening/weakenGR1Invariant
+Content-Type: application/json
+
+{
+  "invariant": "[](Xray -> InPlace)",
+  "fluents": [
+    "fluent Xray = <set_xray, {set_ebeam, reset}>",
+    "fluent EBeam = <set_ebeam, {set_xray, reset}>",
+    "fluent InPlace = <x, e> initially 1",
+    "fluent Fired = <{fire_xray, fire_ebeam}, reset>"
+  ],
+  "positiveExamples": [
+    ["x", "set_xray", "up", "e", "set_ebeam", "enter", "b", "fire_ebeam", "reset"]
+  ],
+  "negativeExamples": [
+    ["x", "set_xray", "up", "e", "enter", "b", "fire_xray", "reset"]
+  ],
+  "maxNumOfNode": 3
+}

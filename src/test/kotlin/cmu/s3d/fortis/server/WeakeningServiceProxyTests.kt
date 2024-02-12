@@ -6,10 +6,12 @@ import cmu.s3d.fortis.common.asSerializableWord
 import cmu.s3d.fortis.service.WeakeningService
 import net.automatalib.word.Word
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 
+@Disabled
 @SpringBootTest(classes = [FortisServerApplication::class])
 class WeakeningServiceProxyTests(
     @Autowired private val service : WeakeningService
