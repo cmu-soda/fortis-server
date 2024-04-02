@@ -28,7 +28,8 @@ class WeakeningController(
             request.envSpecs,
             request.trace?: error("trace is null"),
             request.inputs?: error("inputs is null"),
-            request.fluents
+            request.fluents,
+            request.numOfAdditionalExamples?: 0
         )
     }
 
@@ -60,7 +61,8 @@ data class ExampleGenerationRequest(
     val progress: String?,
     val trace: Word<String>?,
     val inputs: List<String>?,
-    val fluents: List<String>
+    val fluents: List<String>,
+    val numOfAdditionalExamples: Int?
 )
 
 data class WeakeningRequest(

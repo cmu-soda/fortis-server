@@ -48,6 +48,24 @@ Content-Type: application/json
 }
 
 ###
+POST http://localhost:8080/api/weakening/examplesFromTrace
+Content-Type: application/json
+
+{
+  "sysSpecs": [{"type": "FSP", "content": "INTERFACE = (x -> CONFIRM | e -> CONFIRM),\nCONFIRM = (up -> INTERFACE | enter -> FIRE),\nFIRE = (up -> CONFIRM | b -> enter -> INTERFACE).\n\nconst NotSet = 0\nconst Xray = 1\nconst EBeam = 2\nrange BeamState = NotSet .. EBeam\n\nconst ToXray = 3\nconst ToEBeam = 4\nrange BeamSwitch = ToXray .. ToEBeam\n\nBEAM = BEAM[NotSet],\nBEAM[mode:BeamState] = (\n    when (mode == NotSet) x -> set_xray -> BEAM[Xray]\n    |\n    when (mode == NotSet) e -> set_ebeam -> BEAM[EBeam]\n    |\n    // Xray mode\n    when (mode == Xray) x -> BEAM[Xray]\n    |\n    when (mode == Xray) e -> BEAM_SWITCH[ToEBeam]\n    |\n    when (mode == Xray) b -> fire_xray -> reset -> BEAM\n    |\n    // EBeam mode\n    when (mode == EBeam) e -> BEAM[EBeam]\n    |\n    when (mode == EBeam) x -> BEAM_SWITCH[ToXray]\n    |\n    when (mode == EBeam) b -> fire_ebeam -> reset -> BEAM\n),\nBEAM_SWITCH[switch:BeamSwitch] = (\n    // EBeam to Xray\n    when (switch == ToXray) x -> BEAM_SWITCH[ToXray]\n    |\n    when (switch == ToXray) e -> BEAM[EBeam]\n    |\n    when (switch == ToXray) b -> fire_ebeam -> reset -> BEAM\n    |\n    when (switch == ToXray) set_xray -> BEAM[Xray]\n    |\n    // Xray to EBeam\n    when (switch == ToEBeam) e -> BEAM_SWITCH[ToEBeam]\n    |\n    when (switch == ToEBeam) x -> BEAM[Xray]\n    |\n    when (switch == ToEBeam) b -> fire_xray -> reset -> BEAM\n    |\n    when (switch == ToEBeam) set_ebeam -> BEAM[EBeam]\n).\n\nSPREADER = (e -> OUTPLACE | x -> SPREADER),\nOUTPLACE = (e -> OUTPLACE | x -> SPREADER).\n\n||SYS = (INTERFACE || BEAM || SPREADER)."}],
+  "envSpecs": [{"type": "FSP", "content": "ENV = (x -> ENV_1 | e -> ENV_1),\nENV_1 = (enter -> ENV_2 | up -> ENV),\nENV_2 = (b -> enter -> ENV | up -> ENV_1)."}],
+  "trace": ["x", "up", "e", "enter", "b"],
+  "inputs": ["x", "up", "e", "enter", "b"],
+  "fluents": [
+    "fluent Xray = <set_xray, {set_ebeam, reset}>",
+    "fluent EBeam = <set_ebeam, {set_xray, reset}>",
+    "fluent InPlace = <x, e> initially 1",
+    "fluent Fired = <{fire_xray, fire_ebeam}, reset>"
+  ],
+  "numOfAdditionalExamples": -1
+}
+
+###
 POST http://localhost:8080/api/weakening/weakenSafetyInvariant
 Content-Type: application/json
 

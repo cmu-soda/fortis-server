@@ -28,7 +28,8 @@ class WeakeningServiceProxyTests(
                 "fluent EBeam = <set_ebeam, {set_xray, reset}>",
                 "fluent InPlace = <x, e> initially 1",
                 "fluent Fired = <{fire_xray, fire_ebeam}, reset>",
-            )
+            ),
+            0
         )
         assertEquals(
             setOf(
