@@ -34,13 +34,13 @@ class WeakeningController(
     }
 
     @PostMapping("/weakenSafetyInvariant")
-    fun weakenSafetyInvariant(@RequestBody request: WeakeningRequest): List<String> {
+    fun weakenSafetyInvariant(@RequestBody request: WeakeningRequest): String {
         return service.weakenSafetyInvariant(
             request.invariant,
             request.fluents,
             request.positiveExamples,
             request.negativeExamples
-        )
+        ) ?: ""
     }
 
     @PostMapping("/weakenGR1Invariant")
@@ -52,6 +52,11 @@ class WeakeningController(
             request.negativeExamples,
             request.maxNumOfNode?: error("should specify maxNumOfNode for GR1 weakening")
         ) ?: ""
+    }
+
+    @PostMapping("/nextSolution")
+    fun nextSolution(): String {
+        return service.nextSolution() ?: ""
     }
 }
 
